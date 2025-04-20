@@ -8,18 +8,21 @@
   <h2>Securely Authorise Security Deposit</h2>
   <p>This form will securely pre-authorise your credit card. No funds will be captured unless required after your stay.</p>
 
-  <!-- Hosted payment script -->
-  <script
-    src="https://www.simplify.com/commerce/v1/simplify.js"
-    data-sc-key="sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"  <!-- Replace with live key when ready -->
+  <!-- Correct hosted payment script -->
+  <script src="https://www.simplify.com/commerce/simplify.pay.js"></script>
+
+  <!-- Hosted Payment Button -->
+  <button
+    data-sc-key="sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"
+    data-name="S&P Apartments"
     data-description="Security Deposit for Philip Smith"
     data-reference="RES-94435344"
     data-amount="20000"
     data-currency="AUD"
-    data-operation="create.token"  <!-- This enables tokenisation only -->
-    data-name="S&P Apartments"
+    data-operation="create.token"
     data-button-label="Authorise AU$200"
-    data-redirect-url="https://yourdomain.com/security-deposit-complete.html">
-  </script>
+    data-redirect-url="https://briscityapt.github.io/security-deposit/security-deposit-complete.html">
+    Authorise AU$200
+  </button>
 </body>
 </html>
