@@ -1,67 +1,25 @@
-<!-- Simplify Hosted Fields + Security Deposit Auth Form -->
+<!-- Hosted Payment Form with create.token for Security Deposit Authorisation -->
+<!DOCTYPE html>
 <html>
 <head>
-  <script src="https://www.simplify.com/commerce/v1/simplify.js"></script>
+  <title>Security Deposit - Authorise Card</title>
 </head>
 <body>
-  <h2>Process Security Deposit</h2>
-  <form id="payment-form">
-    <div id="simplify-card-number"></div>
-    <div id="simplify-expiration"></div>
-    <div id="simplify-cvc"></div>
+  <h2>Securely Authorise Security Deposit</h2>
+  <p>This form will securely pre-authorise your credit card. No funds will be captured unless required after your stay.</p>
 
-    <input type="text" id="guest-name" placeholder="Guest Name" required>
-    <input type="text" id="reservation-id" placeholder="Reservation Number" required>
-    <input type="date" id="checkin-date" required>
-
-    <button type="submit">Authorise Card ($200)</button>
-  </form>
-
-  <div id="message"></div>
-
-  <script>
-    // Replace this with your general public key
-    const publicKey = "pk_test_YOUR_PUBLIC_KEY";
-
-    SimplifyCommerce.hosted({
-      key: publicKey,
-      cardNumber: { elementId: "simplify-card-number" },
-      expiration: { elementId: "simplify-expiration" },
-      cvc: { elementId: "simplify-cvc" },
-      onError: function(error) {
-        document.getElementById('message').textContent = "Error: " + error.message;
-      },
-      onSuccess: function(payload) {
-        const guestName = document.getElementById("guest-name").value;
-        const reservationId = document.getElementById("reservation-id").value;
-        const checkinDate = document.getElementById("checkin-date").value;
-
-        // Send token and metadata to your backend
-        fetch("https://yourfunction.azurewebsites.net/api/CreateSimplifyAuth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: payload.cardToken,
-            amount: 20000, // $200 in cents
-            guest_name: guestName,
-            reservation_number: reservationId,
-            checkin_date: checkinDate
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('message').textContent = "Authorisation successful. Ref: " + data.auth_id;
-        })
-        .catch(err => {
-          document.getElementById('message').textContent = "Error: " + err.message;
-        });
-      }
-    });
-
-    // Prevent default form submission
-    document.getElementById("payment-form").addEventListener("submit", function(e) {
-      e.preventDefault();
-    });
+  <!-- Hosted payment script -->
+  <script
+    src="https://www.simplify.com/commerce/v1/simplify.js"
+    data-sc-key="sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"  <!-- Replace with live key when ready -->
+    data-description="Security Deposit for Philip Smith"
+    data-reference="RES-94435344"
+    data-amount="20000"
+    data-currency="AUD"
+    data-operation="create.token"  <!-- This enables tokenisation only -->
+    data-name="S&P Apartments"
+    data-button-label="Authorise AU$200"
+    data-redirect-url="https://yourdomain.com/security-deposit-complete.html">
   </script>
 </body>
 </html>
