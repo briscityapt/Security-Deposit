@@ -1,0 +1,67 @@
+<!-- Simplify Hosted Fields + Security Deposit Auth Form -->
+<html>
+<head>
+  <script src="https://www.simplify.com/commerce/v1/simplify.js"></script>
+</head>
+<body>
+  <h2>Process Security Deposit</h2>
+  <form id="payment-form">
+    <div id="simplify-card-number"></div>
+    <div id="simplify-expiration"></div>
+    <div id="simplify-cvc"></div>
+
+    <input type="text" id="guest-name" placeholder="Guest Name" required>
+    <input type="text" id="reservation-id" placeholder="Reservation Number" required>
+    <input type="date" id="checkin-date" required>
+
+    <button type="submit">Authorise Card ($200)</button>
+  </form>
+
+  <div id="message"></div>
+
+  <script>
+    // Replace this with your general public key
+    const publicKey = "pk_test_YOUR_PUBLIC_KEY";
+
+    SimplifyCommerce.hosted({
+      key: publicKey,
+      cardNumber: { elementId: "simplify-card-number" },
+      expiration: { elementId: "simplify-expiration" },
+      cvc: { elementId: "simplify-cvc" },
+      onError: function(error) {
+        document.getElementById('message').textContent = "Error: " + error.message;
+      },
+      onSuccess: function(payload) {
+        const guestName = document.getElementById("guest-name").value;
+        const reservationId = document.getElementById("reservation-id").value;
+        const checkinDate = document.getElementById("checkin-date").value;
+
+        // Send token and metadata to your backend
+        fetch("https://yourfunction.azurewebsites.net/api/CreateSimplifyAuth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: payload.cardToken,
+            amount: 20000, // $200 in cents
+            guest_name: guestName,
+            reservation_number: reservationId,
+            checkin_date: checkinDate
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('message').textContent = "Authorisation successful. Ref: " + data.auth_id;
+        })
+        .catch(err => {
+          document.getElementById('message').textContent = "Error: " + err.message;
+        });
+      }
+    });
+
+    // Prevent default form submission
+    document.getElementById("payment-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+    });
+  </script>
+</body>
+</html>
