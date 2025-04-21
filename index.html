@@ -4,6 +4,22 @@
   <title>Security Deposit - Authorise Card</title>
   <meta name="robots" content="noindex, nofollow">
   <script src="https://www.simplify.com/commerce/simplify.pay.js"></script>
+  <style>
+    .message {
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+    }
+  </style>
 </head>
 <body>
   <h2>Securely Authorise Security Deposit</h2>
@@ -12,7 +28,7 @@
   <!-- Hosted Payment Button -->
   <button
     id="simplify-button"
-    data-sc-key="sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"
+    data-sc-key="sbpb_NmM2ZWQ4YzktMjhjMC00MWM1LTgzMjAtY2MxNGZhNzgwNWZh"
     data-name="S&P Apartments"
     data-description="Security Deposit for Philip Smith"
     data-reference="RES-94435344"
@@ -23,22 +39,85 @@
     Authorise AU$200
   </button>
 
+  <div id="confirmation" class="message" style="display:none;"></div>
+
   <script>
+    let hasSubmitted = false;
+
     SimplifyCommerce.hostedPayments(function(response) {
+      console.log("Simplify response:", response);
+
+      const confirmationDiv = document.getElementById("confirmation");
+
+      function closeModal() {
+        const modal = document.querySelector('iframe[name^="simplify-hosted-frame"]');
+        if (modal) modal.remove();
+      }
+
       if (response.error) {
         console.error("Tokenization error:", response.error);
-        alert("There was an error processing your payment. Please try again.");
-      } else {
-        const token = response.id;
-        const guest = encodeURIComponent("Philip Smith");
-        const res = encodeURIComponent("94435344");
-        const checkin = encodeURIComponent("2025-05-01");
-        const amount = 20000;
-
-        window.location.href = `https://briscityapt.github.io/Security-Deposit/security-deposit-complete.html?simplifyToken=${token}&guest=${guest}&res=${res}&checkin=${checkin}&amount=${amount}`;
+        confirmationDiv.className += " error";
+        confirmationDiv.style.display = "block";
+        confirmationDiv.innerHTML = `<strong>There was an error processing your card:</strong><br>${response.error.message || 'Please try again.'}`;
+        closeModal();
+        return;
       }
+
+      if (hasSubmitted) return;
+      hasSubmitted = true;
+
+      const token = response.cardToken;
+      console.log("Token:", token);
+
+      const guest = encodeURIComponent("Philip Smith");
+      const res = encodeURIComponent("94435344");
+      const checkin = encodeURIComponent("2025-05-01");
+      const amount = 20000;
+
+      fetch("https://stripepaymentintent-smoobu.azurewebsites.net/api/createauthintent?code=DTv4v1fWV7i4Sta6mqZ6PARiPWJgaN7iU8D2ND2R59k_AzFuCblWRA==", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          simplifyToken: token,
+          amount: amount,
+          currency: "AUD",
+          description: `Security deposit for ${decodeURIComponent(guest)}`,
+          reference: decodeURIComponent(res),
+          checkinDate: decodeURIComponent(checkin),
+          capture: "false"
+        })
+      })
+      .then(async res => {
+        const contentType = res.headers.get("content-type");
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        if (contentType && contentType.includes("application/json")) {
+          return res.json();
+        } else {
+          throw new Error("Unexpected response format. Expected JSON.");
+        }
+      })
+      .then(data => {
+        confirmationDiv.style.display = "block";
+        if (data.id || data.status === "APPROVED") {
+          confirmationDiv.className += " success";
+          confirmationDiv.innerHTML = `<strong>Authorisation successful!</strong><br>Your card has been pre-authorised. No funds will be charged unless required after your stay.`;
+        } else {
+          confirmationDiv.className += " error";
+          confirmationDiv.innerHTML = `<strong>Something went wrong:</strong><br>${data.error || 'We couldn\'t process the authorisation. Please contact support.'}`;
+        }
+        closeModal();
+      })
+      .catch(error => {
+        confirmationDiv.className += " error";
+        confirmationDiv.style.display = "block";
+        confirmationDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+        closeModal();
+      });
+
     }, {
-      scKey: "sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"
+      scKey: "sbpb_NmM2ZWQ4YzktMjhjMC00MWM1LTgzMjAtY2MxNGZhNzgwNWZh"
     });
   </script>
 </body>
