@@ -1,19 +1,17 @@
-<!-- Hosted Payment Form with create.token for Security Deposit Authorisation -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Security Deposit - Authorise Card</title>
   <meta name="robots" content="noindex, nofollow">
+  <script src="https://www.simplify.com/commerce/simplify.pay.js"></script>
 </head>
 <body>
   <h2>Securely Authorise Security Deposit</h2>
   <p>This form will securely pre-authorise your credit card. No funds will be captured unless required after your stay.</p>
 
-  <!-- Correct hosted payment script -->
-  <script src="https://www.simplify.com/commerce/simplify.pay.js"></script>
-
   <!-- Hosted Payment Button -->
   <button
+    id="simplify-button"
     data-sc-key="sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"
     data-name="S&P Apartments"
     data-description="Security Deposit for Philip Smith"
@@ -21,9 +19,27 @@
     data-amount="20000"
     data-currency="AUD"
     data-operation="create.token"
-    data-button-label="Authorise AU$200"
-    data-redirect-url="https://briscityapt.github.io/Security-Deposit/security-deposit-complete.html">
+    data-button-label="Authorise AU$200">
     Authorise AU$200
   </button>
+
+  <script>
+    SimplifyCommerce.hostedPayments(function(response) {
+      if (response.error) {
+        console.error("Tokenization error:", response.error);
+        alert("There was an error processing your payment. Please try again.");
+      } else {
+        const token = response.id;
+        const guest = encodeURIComponent("Philip Smith");
+        const res = encodeURIComponent("94435344");
+        const checkin = encodeURIComponent("2025-05-01");
+        const amount = 20000;
+
+        window.location.href = `https://briscityapt.github.io/Security-Deposit/security-deposit-complete.html?simplifyToken=${token}&guest=${guest}&res=${res}&checkin=${checkin}&amount=${amount}`;
+      }
+    }, {
+      scKey: "sbpb_NDJhOTE3NmQtOTZjMC00YTdmLTg5YTMtMzY1MTM4MTg0NGVi"
+    });
+  </script>
 </body>
 </html>
