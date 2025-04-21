@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Security Deposit - Confirmation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    .message {
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+    }
+  </style>
+</head>
+<body>
+  <h2>Processing your security deposit...</h2>
+  <div id="response" class="message"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const simplifyToken = params.get("simplifyToken");
+    const guestName = params.get("guest") || "Unknown Guest";
+    const reservationNumber = params.get("res") || "Unknown";
+    const checkinDate = params.get("checkin") || "";
+    const amount = parseInt(params.get("amount")) || 20000;
+
+    const responseDiv = document.getElementById("response");
+
+    const isTrustedReferrer = document.referrer.includes("briscityapt.github.io/security-deposit");
+
+    if (!simplifyToken || !isTrustedReferrer) {
+      responseDiv.className += " error";
+      responseDiv.textContent = "Invalid or unauthorised request. Please try again or contact support.";
+    } else {
+      fetch("https://stripepaymentintent-smoobu.azurewebsites.net/api/createauthintent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: simplifyToken,
+          amount: amount,
+          currency: "AUD",
+          description: `Security deposit for ${guestName}`,
+          reference: reservationNumber,
+          checkinDate: checkinDate,
+          capture: "false"
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id || data.status === "APPROVED") {
+          responseDiv.className += " success";
+          responseDiv.innerHTML = `<strong>Authorisation successful!</strong><br>Your card has been pre-authorised. No funds will be charged unless required after your stay.`;
+        } else {
+          responseDiv.className += " error";
+          responseDiv.innerHTML = `<strong>Something went wrong:</strong><br>${data.error || "We couldn't process the authorisation. Please contact support."}`;
+        }
+      })
+      .catch(err => {
+        responseDiv.className += " error";
+        responseDiv.innerHTML = `<strong>Error:</strong> ${err.message}`;
+      });
+    }
+
+    // Clean up the URL
+    if (window.history.replaceState) {
+      const url = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, url);
+    }
+  </script>
+</body>
+</html>
