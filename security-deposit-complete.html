@@ -42,11 +42,9 @@
 
     const responseDiv = document.getElementById("response");
 
-    const isTrustedReferrer = document.referrer.includes("briscityapt.github.io/security-deposit");
-
-    if (!simplifyToken || !isTrustedReferrer) {
+    if (!simplifyToken) {
       responseDiv.className += " error";
-      responseDiv.textContent = "Invalid or unauthorised request. Please try again or contact support.";
+      responseDiv.textContent = "Missing token. Please try again or contact support.";
     } else {
       fetch("https://stripepaymentintent-smoobu.azurewebsites.net/api/createauthintent", {
         method: "POST",
